@@ -196,7 +196,7 @@ if st.session_state.result is not None and uploaded is not None:
             except Exception as exc:
                 st.error(f"Follow-up failed: {exc}")
 else:
-    st.chat_input("Ask about the analysis", disabled=True, placeholder="Complete an analysis first")
+    st.chat_input("Complete an analysis first", disabled=True)
 
 st.divider()
 st.markdown("#### Session history & comparison")
