@@ -1,6 +1,6 @@
 # PD2 Skin Analysis
 
-A Flask-based skincare appearance prototype that accepts a face image and uses the HKBU GenAI Gemini 2.5 Pro deployment to provide educational skin-quality observations, apparent-age estimates, and personalised cosmetic routine suggestions.
+A Flask and Streamlit skincare appearance prototype that accepts a face image and uses the HKBU GenAI Gemini 2.5 Pro deployment to provide educational skin-quality observations, apparent-age estimates, and personalised cosmetic routine suggestions.
 
 ## Features
 
@@ -17,10 +17,21 @@ A Flask-based skincare appearance prototype that accepts a face image and uses t
 
 ```powershell
 python -m pip install -r requirements.txt
+```
+
+Run the Streamlit version:
+
+```powershell
+streamlit run app.py
+```
+
+Run the Flask version locally:
+
+```powershell
 python skin_check.py
 ```
 
-Open <http://127.0.0.1:5000>.
+Streamlit Cloud entry point: `app.py`. Local Flask address: <http://127.0.0.1:5000>.
 
 The application uses the HKBU GenAI deployment endpoint configured in `skin_check.py`. Enter your own API key in the page; the key is not stored in the project or repository.
 
