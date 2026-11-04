@@ -34,7 +34,7 @@ Run the Flask version locally:
 python skin_check.py
 ```
 
-Streamlit Cloud entry point: `app.py`. Local Flask address: <http://127.0.0.1:5000>.
+Streamlit Cloud entry point: `app_features.py`. This preserves the original `app.py` deployment and keeps the feature UI in a separate named file. Local Flask address: <http://127.0.0.1:5000>.
 
 The application uses the HKBU GenAI deployment endpoint configured in `skin_check.py`. Enter your own API key in the page; the key is not stored in the project or repository.
 

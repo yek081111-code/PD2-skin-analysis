@@ -250,6 +250,9 @@ st.markdown("""
 [data-testid="stMetricLabel"] {font-size: 0.95rem !important;}
 .small-note {color: #65726b; font-size: 0.82rem; line-height: 1.5;}
 .disclaimer {border-left: 3px solid #b7c8a7; padding: 10px 14px; background: #f8f9f3; color: #586754; font-size: 0.82rem;}
+.auth-card {max-width: 520px; margin: 3rem auto 1rem auto; padding: 28px; border: 1px solid #e1e7dc; border-radius: 16px; background: white;}
+.auth-brand {text-align: center; color: #3e5944; margin-bottom: 0.25rem;}
+.auth-note {text-align: center; color: #65726b; margin-bottom: 1.25rem;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -265,17 +268,20 @@ if "user" not in st.session_state:
     st.session_state.user = None
 if "supabase" not in st.session_state:
     st.session_state.supabase = get_supabase()
+if "entered_app" not in st.session_state:
+    st.session_state.entered_app = False
 
-st.markdown("### Skin appearance analysis")
-st.caption("Upload a face photo to receive visual skin KPIs and a personalised routine.")
+if not st.session_state.entered_app:
+    st.markdown('<div class="auth-card">', unsafe_allow_html=True)
+    st.markdown('<h1 class="auth-brand">SkinCheck</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="auth-note">Sign in to save your analysis history, or continue as a guest.</p>', unsafe_allow_html=True)
 
-with st.sidebar:
-    st.markdown("### Account")
-    if st.session_state.user is None:
-        auth_mode = st.radio("Access mode", ["Sign in", "Create account"], horizontal=True)
-        email = st.text_input("Email", key="account_email")
-        password = st.text_input("Password", type="password", key="account_password")
-        if st.button(auth_mode, use_container_width=True):
+    auth_tab, guest_tab = st.tabs(["Sign in / Create account", "Continue as guest"])
+    with auth_tab:
+        auth_mode = st.radio("Account action", ["Sign in", "Create account"], horizontal=True, key="landing_auth_mode")
+        email = st.text_input("Email", key="landing_account_email")
+        password = st.text_input("Password", type="password", key="landing_account_password")
+        if st.button(auth_mode, type="primary", use_container_width=True, key="landing_auth_submit"):
             if len(password) < 8 or "@" not in email:
                 st.error("Use a valid email and a password with at least 8 characters.")
             else:
@@ -292,6 +298,7 @@ with st.sidebar:
                         else:
                             st.session_state.user = {"mode": "supabase", "id": auth_user.id, "email": auth_user.email}
                             st.session_state.records = load_assessments(st.session_state.user)
+                            st.session_state.entered_app = True
                             st.rerun()
                     else:
                         if auth_mode == "Create account":
@@ -299,9 +306,32 @@ with st.sidebar:
                         else:
                             st.session_state.user = local_login(email.strip(), password)
                         st.session_state.records = load_assessments(st.session_state.user)
+                        st.session_state.entered_app = True
                         st.rerun()
                 except Exception as exc:
                     st.error(str(exc))
+    with guest_tab:
+        st.info("Guest mode lets you analyse a photo and download the report. Saving history requires an account.")
+        if st.button("Skip login and continue", use_container_width=True, key="landing_guest"):
+            st.session_state.entered_app = True
+            st.session_state.user = None
+            st.session_state.records = []
+            st.rerun()
+
+    st.markdown('<div class="small-note">Your photo is sent only when an analysis is requested.</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.stop()
+
+st.markdown("### Skin appearance analysis")
+st.caption("Upload a face photo to receive visual skin KPIs and a personalised routine.")
+
+with st.sidebar:
+    st.markdown("### Account")
+    if st.session_state.user is None:
+        st.caption("Guest mode")
+        if st.button("Sign in or create account", use_container_width=True):
+            st.session_state.entered_app = False
+            st.rerun()
     else:
         st.success(st.session_state.user["email"])
         if st.button("Sign out", use_container_width=True):
@@ -310,6 +340,7 @@ with st.sidebar:
             st.session_state.user = None
             st.session_state.records = []
             st.session_state.result = None
+            st.session_state.entered_app = False
             st.rerun()
     if st.session_state.supabase is None:
         st.caption("Local demo mode: SQLite is used because Supabase secrets are not configured.")
@@ -447,8 +478,6 @@ if analyze:
         st.warning("Upload a photo first.")
     elif not consent:
         st.warning("Confirm permission to send this photo.")
-    elif st.session_state.user is None:
-        st.warning("Sign in or create an account before analysis.")
     else:
         api_key_dialog()
 
