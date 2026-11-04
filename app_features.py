@@ -85,12 +85,12 @@ def password_matches(password, stored_hash):
 def local_register(email, password):
     connection = local_connect()
     try:
-        connection.execute(
+        cursor = connection.execute(
             "INSERT INTO users(email, password_hash, created_at) VALUES (?, ?, ?)",
             (email.lower(), password_hash(password), datetime.now(timezone.utc).isoformat()),
         )
         connection.commit()
-        return {"mode": "local", "id": email.lower(), "email": email.lower()}
+        return {"mode": "local", "id": cursor.lastrowid, "email": email.lower()}
     except sqlite3.IntegrityError:
         raise ValueError("This email is already registered.")
     finally:
@@ -106,6 +106,20 @@ def local_login(email, password):
     if not row or not password_matches(password, row[2]):
         raise ValueError("Incorrect email or password.")
     return {"mode": "local", "id": str(row[0]), "email": row[1]}
+
+
+def resolve_local_user_id(user):
+    try:
+        return int(user["id"])
+    except (TypeError, ValueError):
+        connection = local_connect()
+        row = connection.execute(
+            "SELECT id FROM users WHERE email = ?", (user["email"].lower(),)
+        ).fetchone()
+        connection.close()
+        if row is None:
+            raise ValueError("Local account could not be found. Please sign in again.")
+        return int(row[0])
 
 
 def assessment_to_row(result, preferences):
@@ -136,7 +150,7 @@ def save_assessment(user, result, preferences):
             (user_id, timestamp, model, cleanliness, quality, age_range, description, limitations, morning, evening, preferences)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            int(user["id"]), row["timestamp"], row["model"], row["cleanliness"], row["quality"],
+            resolve_local_user_id(user), row["timestamp"], row["model"], row["cleanliness"], row["quality"],
             row["age_range"], row["description"], row["limitations"], row["morning"], row["evening"], row["preferences"],
         ))
         connection.commit()
@@ -166,7 +180,7 @@ def load_assessments(user):
                 SELECT id, timestamp, model, cleanliness, quality, age_range,
                        description, limitations, morning, evening, preferences
                 FROM assessments WHERE user_id = ? ORDER BY timestamp
-            """, (int(user["id"]),)).fetchall()
+            """, (resolve_local_user_id(user),)).fetchall()
         ]
         connection.close()
 
@@ -194,7 +208,10 @@ def clear_assessments(user):
         supabase.table("assessments").delete().eq("user_id", user["id"]).execute()
     else:
         connection = local_connect()
-        connection.execute("DELETE FROM assessments WHERE user_id = ?", (int(user["id"]),))
+        connection.execute(
+            "DELETE FROM assessments WHERE user_id = ?",
+            (resolve_local_user_id(user),),
+        )
         connection.commit()
         connection.close()
 
