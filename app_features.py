@@ -37,6 +37,16 @@ def get_supabase():
         return None
 
 
+def friendly_auth_error(exc):
+    message = str(exc)
+    lowered = message.lower()
+    if "email rate limit exceeded" in lowered or "rate limit" in lowered:
+        return "Email sending is temporarily limited by Supabase. Please wait before trying again, avoid repeated registration attempts, or configure a custom SMTP provider."
+    if "email not confirmed" in lowered:
+        return "Please confirm your email first, then sign in."
+    return message
+
+
 def local_connect():
     connection = sqlite3.connect(LOCAL_DB)
     connection.execute("PRAGMA foreign_keys = ON")
@@ -311,7 +321,7 @@ if not st.session_state.entered_app:
                         st.session_state.entered_app = True
                         st.rerun()
                 except Exception as exc:
-                    st.error(str(exc))
+                    st.error(friendly_auth_error(exc))
     with guest_tab:
         st.info("Guest mode lets you analyse a photo and download the report. Saving history requires an account.")
         if st.button("Skip login and continue", use_container_width=True, key="landing_guest"):
