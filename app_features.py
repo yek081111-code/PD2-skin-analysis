@@ -302,6 +302,11 @@ if not st.session_state.entered_app:
                         supabase = st.session_state.supabase
                         if auth_mode == "Create account":
                             response = supabase.auth.sign_up({"email": email.strip(), "password": password})
+                            if response.session is None and response.user is not None:
+                                response = supabase.auth.sign_in_with_password({
+                                    "email": email.strip(),
+                                    "password": password,
+                                })
                         else:
                             response = supabase.auth.sign_in_with_password({"email": email.strip(), "password": password})
                         auth_user = response.user
