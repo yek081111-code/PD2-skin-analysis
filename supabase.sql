@@ -15,6 +15,14 @@ create table if not exists public.assessments (
 
 alter table public.assessments enable row level security;
 
+grant usage on schema public to authenticated;
+grant select, insert, delete on table public.assessments to authenticated;
+grant usage, select on sequence public.assessments_id_seq to authenticated;
+
+drop policy if exists "Users can view their assessments" on public.assessments;
+drop policy if exists "Users can insert their assessments" on public.assessments;
+drop policy if exists "Users can delete their assessments" on public.assessments;
+
 create policy "Users can view their assessments"
 on public.assessments for select
 using (auth.uid() = user_id);

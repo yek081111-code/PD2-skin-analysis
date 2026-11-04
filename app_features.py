@@ -44,6 +44,8 @@ def friendly_auth_error(exc):
         return "Email sending is temporarily limited by Supabase. Please wait before trying again, avoid repeated registration attempts, or configure a custom SMTP provider."
     if "email not confirmed" in lowered:
         return "Please confirm your email first, then sign in."
+    if "42501" in message or "permission denied for table" in lowered:
+        return "Database permission is missing. The Supabase SQL setup must grant the authenticated role access to public.assessments."
     return message
 
 
