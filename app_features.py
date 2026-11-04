@@ -282,8 +282,8 @@ if not st.session_state.entered_app:
         email = st.text_input("Email", key="landing_account_email")
         password = st.text_input("Password", type="password", key="landing_account_password")
         if st.button(auth_mode, type="primary", use_container_width=True, key="landing_auth_submit"):
-            if len(password) < 8 or "@" not in email:
-                st.error("Use a valid email and a password with at least 8 characters.")
+            if not email.strip() or not password:
+                st.error("Enter an email and password.")
             else:
                 try:
                     if st.session_state.supabase is not None:
